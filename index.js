@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 
 const puppeteer = require('puppeteer');
+const reorderArray = require('./controllers/reorderArray');
 
 let scrape = async () => {
   const browser = await puppeteer.launch({headless: true})
@@ -17,7 +18,12 @@ let scrape = async () => {
       colunas.push({
         ticket: row.cells[0].textContent,
         setor: row.cells[1].textContent,
-        precoAtualValor: row.cells[2].getAttribute('data-order'),
+        vacancia: Number((row.cells[23].textContent).replace(/N\/A/g, null).replace(/,/g, '.').replace(/%/g, '')),
+        dividendYeald12m: Number((row.cells[8].textContent).replace(/,/g, '.').replace(/%/g, '')),
+        p_sobre_vpa: Number((row.cells[18].textContent).replace(/,/g, '.')),
+        liquidez: Number(row.cells[3].textContent),
+        diversificacao: Number(row.cells[25].textContent),
+        patrimonio_liquido: Number((row.cells[16].textContent).replace(/R\$ /g, '').replace(/\./g, '').replace(/,/g, '.'))
       });
     });
     
@@ -25,10 +31,8 @@ let scrape = async () => {
     
   });
   
-  console.log('mais doidera...');
-  
   browser.close()
-  return result;
+  return result; 
 };
 
 app.get('/', function (req, res) {
@@ -36,11 +40,14 @@ app.get('/', function (req, res) {
   scrape().then((value) => {
     console.log(value) // sucesso!
 
-    res.json(value);
-  
+    var reorderedArray = reorderArray(value);
+
+    res.json(reorderedArray);
+   
   });
+
 });
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
-});
+}); 
